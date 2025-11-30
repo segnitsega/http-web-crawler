@@ -1,29 +1,50 @@
 const { JSDOM } = require("jsdom");
 
-async function crawlPage(url) {
-  console.log(`Crawling activated: ${url}`);
+async function crawlPage(baseUrl, currentUrl, pages) {
+  const baseUrlObj = new URL(baseUrl);
+  const currentUrlObj = new URL(currentUrl);
+
+  if (baseUrlObj.hostname !== currentUrlObj.hostname) {
+    return pages;
+  }
+
+  const normalizedUrl = normalizeUrl(currentUrl);
+
+  if (pages[normalizedUrl] > 0) {
+    pages[normalizedUrl]++;
+    return pages;
+  }
+
+  pages[normalizedUrl] = 1;
+  console.log(`Crawling: ${currentUrl}`);
 
   try {
-    const resp = await fetch(url);
+    const resp = await fetch(currentUrl);
 
     if (resp.status >= 400) {
-      console.log(`Error fetching page: ${url} Status Code: ${resp.status}`);
-      return;
+      console.log(
+        `Error fetching page: ${currentUrl} Status Code: ${resp.status}`
+      );
+      return pages;
     }
+
     const contentType = resp.headers.get("content-type");
     if (!contentType.includes("text/html")) {
       console.log(
-        `Non html response, content type: ${contentType} for url: ${url}`
+        `Non html response, content type: ${contentType} for url: ${currentUrl}`
       );
-      return;
+      return pages;
     }
-    console.log(await resp.text());
-    
-    // const urls = getUrlFromHtml(await resp.text())
-    // console.log(`The urls from the ${url} page are: ${urls}`)
+
+    const htmlBody = await resp.text();
+    const urls = getUrlFromHtml(htmlBody, baseUrl);
+    for (const url of urls) {
+      pages = await crawlPage(baseUrl, url, pages);
+    }
   } catch (error) {
-    console.log(`Error fetching ${error.message} page: ${url}`);
+    console.log(`Error fetching ${error.message} page: ${currentUrl}`);
   }
+  return pages;
 }
 
 function getUrlFromHtml(htmlBody, baseUrl) {
@@ -32,13 +53,18 @@ function getUrlFromHtml(htmlBody, baseUrl) {
   const urls = [];
   links.forEach((link) => {
     if (link.href.startsWith("/")) {
-      urls.push(baseUrl + link.href);
+      try {
+        const urlObj = new URL(link.href, baseUrl);
+        urls.push(urlObj.href);
+      } catch (error) {
+        console.log("Error in relative path", err.message);
+      }
     } else {
       try {
         const urlObj = new URL(link.href);
         urls.push(urlObj.href);
       } catch (err) {
-        console.log("Error ", err.message);
+        console.log("Error in absolute path", err.message);
       }
     }
   });
