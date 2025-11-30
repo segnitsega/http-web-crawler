@@ -1,15 +1,39 @@
 const { JSDOM } = require("jsdom");
 
+async function crawlPage(url) {
+  console.log(`Crawling activated: ${url}`);
+
+  try {
+    const resp = await fetch(url);
+
+    if (resp.status >= 400) {
+      console.log(`Error fetching page: ${url} Status Code: ${resp.status}`);
+      return;
+    }
+    const contentType = resp.headers.get("content-type");
+    if (!contentType.includes("text/html")) {
+      console.log(
+        `Non html response, content type: ${contentType} for url: ${url}`
+      );
+      return;
+    }
+    console.log(await resp.text());
+    
+    // const urls = getUrlFromHtml(await resp.text())
+    // console.log(`The urls from the ${url} page are: ${urls}`)
+  } catch (error) {
+    console.log(`Error fetching ${error.message} page: ${url}`);
+  }
+}
+
 function getUrlFromHtml(htmlBody, baseUrl) {
-  // const {JSDOM} = await import("jsdom");
   const dom = new JSDOM(htmlBody);
   const links = dom.window.document.querySelectorAll("a");
   const urls = [];
   links.forEach((link) => {
     if (link.href.startsWith("/")) {
       urls.push(baseUrl + link.href);
-    }
-    else {
+    } else {
       try {
         const urlObj = new URL(link.href);
         urls.push(urlObj.href);
@@ -18,12 +42,8 @@ function getUrlFromHtml(htmlBody, baseUrl) {
       }
     }
   });
-  console.log(urls);
   return urls;
 }
-
-const inputHtmlBody = `<html><body><a href="/path">Link</a><a href="invalid">Link</a><<a href="https://google.com">Link</a>/body></html>`;
-getUrlFromHtml(inputHtmlBody, "http://google.com");
 
 function normalizeUrl(url) {
   const urlObj = new URL(url);
@@ -37,4 +57,5 @@ function normalizeUrl(url) {
 module.exports = {
   normalizeUrl,
   getUrlFromHtml,
+  crawlPage,
 };
