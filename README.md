@@ -96,6 +96,33 @@ JSON Report Structure
 
 ```
 
+CSV Report Structure
+
+```bash
+Crawl Report
+Base URL: http://example.com
+Crawl Date: 2025-12-01T07:23:05.553Z
+
+PAGES
+URL,Internal Links Count
+"example.com",63
+"example.com/tags",62
+"example.com/about",62
+"example.com/index.xml",62
+"example.com/posts/leave-scrum-to-rugby",5
+"example.com/posts/managers-that-cant-code",4
+"example.com/posts/kanban-vs-scrum",4
+"example.com/posts/continuous-deployments-arent-continuous-disruptions",3
+"example.com/posts/dark-patterns",2
+"example.com/posts/things-i-dont-want-to-do-to-grow-business",2
+---
+
+SUMMARY
+Total Pages,32
+Total Broken Pages,2
+
+```
+
 API (quick)
 
 - normalizeUrl(url) -> returns "hostname/path" (no protocol, no trailing slash)
