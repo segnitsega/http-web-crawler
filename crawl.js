@@ -1,18 +1,18 @@
 const { JSDOM } = require("jsdom");
 
-async function crawlPage(baseUrl, currentUrl, pages) {
+async function crawlPage(baseUrl, currentUrl, pages, brokenPages = []) {
   const baseUrlObj = new URL(baseUrl);
   const currentUrlObj = new URL(currentUrl);
 
   if (baseUrlObj.hostname !== currentUrlObj.hostname) {
-    return pages;
+    return { pages, brokenPages };
   }
 
   const normalizedUrl = normalizeUrl(currentUrl);
 
   if (pages[normalizedUrl] > 0) {
     pages[normalizedUrl]++;
-    return pages;
+    return { pages, brokenPages };
   }
 
   pages[normalizedUrl] = 1;
@@ -23,9 +23,17 @@ async function crawlPage(baseUrl, currentUrl, pages) {
 
     if (resp.status >= 400) {
       console.log(
-        `Error fetching page: ${currentUrl} Status Code: ${resp.status}`
+        `Broken link found: ${currentUrl} Status Code: ${resp.status}`
       );
-      return pages;
+
+      brokenPages.push({
+        url: currentUrl,
+        status: resp.status,
+        referrer: baseUrl,
+        discoveredAt: new Date().toISOString(),
+      });
+
+      return { pages, brokenPages };
     }
 
     const contentType = resp.headers.get("content-type");
@@ -33,18 +41,30 @@ async function crawlPage(baseUrl, currentUrl, pages) {
       console.log(
         `Non html response, content type: ${contentType} for url: ${currentUrl}`
       );
-      return pages;
+      return { pages, brokenPages };
     }
 
     const htmlBody = await resp.text();
     const urls = getUrlFromHtml(htmlBody, baseUrl);
+
     for (const url of urls) {
-      pages = await crawlPage(baseUrl, url, pages);
+      const result = await crawlPage(baseUrl, url, pages);
+      pages = result.pages;
+      brokenPages = result.brokenPages;
     }
   } catch (error) {
     console.log(`Error fetching ${error.message} page: ${currentUrl}`);
+
+    brokenPages.push({
+      url: currentUrl,
+      status: "NETWORK_ERROR",
+      error: error.message,
+      referrer: baseUrl,
+      discoveredAt: new Date().toISOString(),
+    });
   }
-  return pages;
+  
+  return { pages, brokenPages };
 }
 
 function getUrlFromHtml(htmlBody, baseUrl) {
