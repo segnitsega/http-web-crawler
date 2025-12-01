@@ -15,7 +15,7 @@ function printReport(pages, brokenPages = []) {
   }
 
   if (brokenPages.length > 0) {
-    console.log("\nBROKEN PAGES FOUND:");
+    console.log("\n❌ BROKEN PAGES FOUND:");
     console.log("-".repeat(50));
     brokenPages.forEach((page, index) => {
       console.log(`${index + 1}. ${page.url}`);

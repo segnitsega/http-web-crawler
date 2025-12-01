@@ -1,13 +1,15 @@
-# http-web-crawler
+# 🌐 http-web-crawler
 
 A small Node.js web crawler for exploring and counting pages within a single host. Intended for learning and simple crawling tasks.
 
 ## Features
 
-- Recursively crawls pages within the same hostname
-- Extracts absolute and relative links from HTML
-- Normalizes URLs for counting/uniqueness
-- Simple, testable modules: normalizeUrl, getUrlFromHtml, crawlPage
+- Smart Crawling - Recursively crawls pages within the same hostname
+- SEO Analysis - Counts internal links to identify important pages
+- URL Extraction - Parses absolute and relative links from HTML
+- Broken Link Detection - Identifies 404 pages and network errors
+- Report Export - Save results as JSON or CSV files
+- URL Normalization - Ensures consistent URL comparison
 
 ## Getting started
 
@@ -16,16 +18,82 @@ Requirements
 - Node.js 18+ (or a Node version that provides fetch)
 - npm
 
-Install
+Installation
 
 ```bash
+git clone https://github.com/segnitsega/http-web-crawler.git
+cd http-web-crawler
 npm install
 ```
 
-Run (example)
+Basic Usage
 
 ```bash
-node start "http://example.com"
+# Crawl a website (saves JSON report by default)
+npm start -- https://example.com
+
+# Save report as CSV
+npm start -- https://example.com --csv
+
+# Save report as JSON
+npm start -- https://example.com --json
+
+# Save report both as CSV and as JSON
+npm start -- https://example.com --all
+
+```
+
+Sample Output
+
+```bash
+==================================================
+CRAWL REPORT
+==================================================
+
+📊 INTERNAL LINK ANALYSIS:
+--------------------------------------------------
+Found 63 internal links → www.example.com
+Found 62 internal links → www.example.com/tags
+Found 62 internal links → www.example.com/about
+...
+
+❌ BROKEN PAGES FOUND:
+--------------------------------------------------
+1. https://example.com/deleted-page
+   Status: 404
+   Linked from: https://example.com/home
+
+==================================================
+SUMMARY:
+--------------------------------------------------
+Total unique pages: 31
+Total broken pages: 2
+==================================================
+```
+
+JSON Report Structure
+
+```bash
+{
+  "metadata": {"baseUrl": "https://example.com",
+    "crawlDate": "2024-01-15T10:30:00.000Z",
+    "totalPages": 31,
+    "totalBrokenPages": 2},
+  "pages": [
+    {
+      "url": "www.example.com",
+      "internalLinksCount": 63
+    }
+  ],
+  "brokenPages": [
+    {
+      "url": "https://example.com/deleted-page",
+      "status": 404,
+      "referrer": "https://example.com/home"
+    }
+  ]
+}
+
 ```
 
 API (quick)
